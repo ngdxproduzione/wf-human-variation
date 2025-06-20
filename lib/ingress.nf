@@ -632,11 +632,11 @@ process checkBamHeaders {
     label "wf_common"
     cpus 1
     memory "2 GB"
-    input: tuple val(meta), path("input_dir/*.bam")
+    input: tuple val(meta), path("input_dir/reads*.bam")
     output:
         tuple(
             val(meta),
-            path("input_dir/*.bam", includeInputs: true),
+            path("input_dir/reads*.bam", includeInputs: true),
             env(IS_UNALIGNED),
             env(MIXED_HEADERS),
             env(IS_SORTED),
@@ -680,32 +680,30 @@ process mergeBams {
     label "wf_common"
     cpus 3
     memory "4 GB"
-    input: tuple val(meta), path("input_bams/*.bam")
+    input: tuple val(meta), path("input_bams/reads*.bam")
     output: tuple val(meta), path("reads.bam"), path("reads.bam.bai")
     script:
     def merge_threads = Math.max(1, task.cpus - 1)
     """
     samtools merge -@ ${merge_threads} \
-        -c -b <(find input_bams -name '*.bam' | sort) --write-index -o reads.bam##idx##reads.bam.bai
+        -c -b <(find input_bams -name 'reads*.bam' | sort) --write-index -o reads.bam##idx##reads.bam.bai
     """
 }
 
 
 // Sort FOFN for samtools cat to ensure samtools sort breaks ties deterministically.
 process catSortBams {
-    debug true
     label "ingress"
     label "wf_common"
     cpus 4
     memory "4 GB"
-    input: tuple val(meta), path("input_bams/*.bam")
+    input: tuple val(meta), path("input_bams/reads*.bam")
     output: tuple val(meta), path("reads.bam"), path("reads.bam.bai")
     script:
     def sort_threads = Math.max(1, task.cpus - 2)
     """
-    find input_bams -name '*.bam' | sort > bamlist.txt
-    head bamlist.txt
-    samtools cat -b bamlist.txt | samtools sort - -@ $sort_threads --write-index -o reads.bam##idx##reads.bam.bai
+    samtools cat -b <(find input_bams -name 'reads*.bam' | sort) \
+    | samtools sort - -@ ${sort_threads} --write-index -o reads.bam##idx##reads.bam.bai
     """
 }
 
