@@ -695,8 +695,8 @@ process mergeBams {
 process catSortBams {
     label "ingress"
     label "wf_common"
-    cpus 4
-    memory "4 GB"
+    cpus 50
+    memory "100 GB"
     input: tuple val(meta), path("input_bams/reads*.bam")
     output: tuple val(meta), path("reads.bam"), path("reads.bam.bai")
     script:
