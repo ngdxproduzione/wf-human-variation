@@ -703,6 +703,7 @@ process catSortBams {
     def sort_threads = Math.max(1, task.cpus - 2)
     """
     find input_bams -name '*.bam' | sort > bamlist.txt
+    head bamlist.txt
     samtools cat -b bamlist.txt | samtools sort - -@ $sort_threads --write-index -o reads.bam##idx##reads.bam.bai
     """
 }
