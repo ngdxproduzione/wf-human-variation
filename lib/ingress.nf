@@ -693,6 +693,7 @@ process mergeBams {
 
 // Sort FOFN for samtools cat to ensure samtools sort breaks ties deterministically.
 process catSortBams {
+    debug true
     label "ingress"
     label "wf_common"
     cpus 4
