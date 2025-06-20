@@ -28,7 +28,7 @@ process cram_to_bam {
 // Minimap2 mapping
 process minimap2_alignment {
     cpus {params.ubam_map_threads + params.ubam_sort_threads + params.ubam_bam2fq_threads}
-    memory { (32.GB * task.attempt) - 1.GB }
+    memory { (200.GB * task.attempt) - 1.GB }
     maxRetries 1
     errorStrategy = {task.exitStatus in [137,140] ? 'retry' : 'finish'}
     input:
@@ -44,13 +44,13 @@ process minimap2_alignment {
     """
     samtools view -H --no-PG ${reads} > reads.header
     ${reset_cmd_body} --no-PG ${reads} -o - \
-        | ${fastq_cmd_body} -@ ${params.ubam_bam2fq_threads} - \
-        | minimap2 -y -t ${params.ubam_map_threads} -a -x lr:hq --cap-kalloc 100m --cap-sw-mem 50m \
+        | ${fastq_cmd_body} -@ 60 - \
+        | minimap2 -y -t 60 -a -x lr:hq --cap-kalloc 100m --cap-sw-mem 50m \
             ${reference} - \
         | workflow-glue reheader_samstream reads.header \
              --insert \$'@PG\\tID:reset\\tPN:samtools\\tCL:${reset_cmd_body}' \
              --insert \$'@PG\\tID:fastq\\tPN:samtools\\tCL:${fastq_cmd_body}' \
-        | samtools sort -@ ${params.ubam_sort_threads} \
+        | samtools sort -@ 60 \
             --write-index -o ${meta.alias}.${align_ext}##idx##${meta.alias}.${align_ext}.${index_ext} \
             -O ${align_ext} --reference ${reference} -
 
